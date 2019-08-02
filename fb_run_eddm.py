@@ -622,7 +622,7 @@ def job_agent_status(days):
     date_from = datetime.datetime.strftime(datetime.datetime.today(), "%Y/%m/%d")
     date_to = datetime.datetime.strftime(datetime.timedelta(days=(days - 1)) + datetime.datetime.today(), "%Y/%m/%d")
 
-    with open(os.path.join(os.curdir, report_filename), 'w+') as log:
+    with open(os.path.join(gblv.shared_path, report_filename), 'w+') as log:
         log.write("Agent status for jobs mailing {} - {}\n\n".format(date_from, date_to))
 
         log.write("{:<25}{:<18}{:<12}{:<12}{:<40}\n".format("Job Name",
@@ -645,7 +645,7 @@ def write_message_log():
     log_filename = "LOG_{datestring}.txt".format(
             datestring=datetime.datetime.strftime(datetime.datetime.now(), "%Y-%m-%d_%I %M %p"))
 
-    with open(os.path.join(os.curdir, log_filename), 'w+') as log:
+    with open(os.path.join(gblv.shared_path, log_filename), 'w+') as log:
         for message in gblv.log_messages:
             log.write("{}\n".format(message))
 

@@ -17,8 +17,6 @@ class GlobalVar:
         config = configparser.ConfigParser()
         config.read(os.path.join(os.curdir, 'config.ini'))
 
-        self.order_db = os.path.join(os.curdir, 'orders.db')
-
         self.fb_token = config['token']['fb_token']
         # self.fb_qa_token = config['token']['fbmtk-qa_token']
         # Changed this token to the production token, now working with live orders 2019-07-22
@@ -73,15 +71,31 @@ class GlobalVar:
             self.ftp_directory = (os.path.join(os.path.abspath(os.sep), 'media','Print',
                                               'FTPfiles','LocalUser','FB-EDDM'))
 
-        self.downloaded_orders_path = os.curdir
-        self.save_orders_path = os.curdir
-        self.accuzip_path = os.curdir
-        self.reset_routes_path = os.curdir
-        self.duplicate_orders_path = os.curdir
-        self.hold_orders_path = os.curdir
-        self.no_match_orders_path = os.curdir
-        self.complete_processing_path = os.curdir
-        self.deleted_orders_path = os.curdir
+
+        # self.downloaded_orders_path = os.curdir
+        # self.save_orders_path = os.curdir
+        # self.accuzip_path = os.curdir
+        # self.reset_routes_path = os.curdir
+        # self.duplicate_orders_path = os.curdir
+        # self.hold_orders_path = os.curdir
+        # self.no_match_orders_path = os.curdir
+        # self.complete_processing_path = os.curdir
+        # self.deleted_orders_path = os.curdir
+
+        # New settings for shared db connection
+        self.downloaded_orders_path = os.path.join('\\\\JTSRV2', 'Grimes', 'FB_EDDM_Orders')
+        self.save_orders_path = os.path.join('\\\\JTSRV2', 'Grimes', 'FB_EDDM_Orders')
+        self.accuzip_path = os.path.join('\\\\JTSRV2', 'Grimes', 'FB_EDDM_Orders')
+        self.reset_routes_path = os.path.join('\\\\JTSRV2', 'Grimes', 'FB_EDDM_Orders')
+        self.duplicate_orders_path = os.path.join('\\\\JTSRV2', 'Grimes', 'FB_EDDM_Orders')
+        self.hold_orders_path = os.path.join('\\\\JTSRV2', 'Grimes', 'FB_EDDM_Orders')
+        self.no_match_orders_path = os.path.join('\\\\JTSRV2', 'Grimes', 'FB_EDDM_Orders')
+        self.complete_processing_path = os.path.join('\\\\JTSRV2', 'Grimes', 'FB_EDDM_Orders')
+        self.deleted_orders_path = os.path.join('\\\\JTSRV2', 'Grimes', 'FB_EDDM_Orders')
+        self.shared_path = os.path.join('\\\\JTSRV2', 'Grimes', 'FB_EDDM_Orders')
+
+        # self.order_db = os.path.join(self.shared_path, 'orders.db')
+
 
         self.log_messages = []
         self.delete_original_files = True
@@ -92,17 +106,17 @@ class GlobalVar:
 
     def set_order_paths(self):
         if self.environment.upper() == 'PRODUCTION':
-            self.downloaded_orders_path = os.path.join(os.path.join(os.curdir, 'unprocessed_orders'))
-            self.accuzip_path = os.path.join(os.curdir, 'accuzip_orders')
-            self.reset_routes_path = os.path.join(os.curdir, 'reset_routes')
-            self.save_orders_path = os.path.join(os.curdir, 'success_orders')
-            self.hold_orders_path = os.path.join(os.curdir, 'hold_orders')
+            self.downloaded_orders_path = os.path.join(os.path.join(self.shared_path, 'unprocessed_orders'))
+            self.accuzip_path = os.path.join(self.shared_path, 'accuzip_orders')
+            self.reset_routes_path = os.path.join(self.shared_path, 'reset_routes')
+            self.save_orders_path = os.path.join(self.shared_path, 'success_orders')
+            self.hold_orders_path = os.path.join(self.shared_path, 'hold_orders')
             self.duplicate_orders_path = os.path.join(self.hold_orders_path, 'duplicate_orders')
             self.no_match_orders_path = os.path.join(self.hold_orders_path, 'no_order_match')
-            self.complete_processing_path = os.path.join(os.curdir, 'complete_processing_files')
-            self.deleted_orders_path = os.path.join(os.curdir, 'deleted_orders')
+            self.complete_processing_path = os.path.join(self.shared_path, 'complete_processing_files')
+            self.deleted_orders_path = os.path.join(self.shared_path, 'deleted_orders')
         else:
-            self.downloaded_orders_path = os.path.join(os.path.join(os.curdir, 'fb-eddm', 'test'))
+            self.downloaded_orders_path = os.path.join(os.path.join(self.shared_path, 'fb-eddm', 'test'))
             self.accuzip_path = os.path.join(self.downloaded_orders_path, 'accuzip_orders')
             self.reset_routes_path = os.path.join(self.downloaded_orders_path, 'reset_routes')
             self.save_orders_path = os.path.join(self.downloaded_orders_path, 'success_orders')
@@ -123,7 +137,8 @@ class GlobalVar:
             self.token = self.fb_qa_token
 
     def set_db_name(self):
-        self.db_name = self.db_names[self.environment]
+        # self.db_names[self.environment]
+        self.db_name = os.path.join(self.shared_path, self.db_names[self.environment])
 
     def print_log(self, message):
         """
