@@ -560,6 +560,20 @@ def append_filename_to_orderdetail(gblv):
     conn.close()
 
 
+def append_filename_to_orderdetail_48_hour(gblv):
+    sql = ("UPDATE OrderDetail SET `file_match` = "
+           "(SELECT filename FROM NoMatchFiles WHERE jobname = "
+           'TRIM((OrderDetail.order_order_number||"_"||OrderDetail.order_detail_id))) '
+           "WHERE EXISTS (SELECT filename FROM NoMatchFiles WHERE "
+           'jobname = TRIM((OrderDetail.order_order_number||"_"||OrderDetail.order_detail_id))) ;')
+
+    conn = sqlite3.connect(gblv.db_name)
+    cursor = conn.cursor()
+    cursor.execute(sql)
+    conn.commit()
+    conn.close()
+
+
 def processing_table_to_history(gblv):
     """Backs up ProcessingFiles table to ProcessingFilesHistory"""
     conn = sqlite3.connect(gblv.db_name)
