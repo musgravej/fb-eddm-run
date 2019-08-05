@@ -767,6 +767,7 @@ def run_processing():
     process_non_match(48)
 
     get_order_by_date.append_filename_to_orderdetail(gblv)
+    get_order_by_date.append_filename_to_orderdetail_48_hour(gblv)
     get_order_by_date.processing_table_to_history(gblv)
 
     write_message_log()
