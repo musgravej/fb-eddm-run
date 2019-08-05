@@ -897,6 +897,6 @@ def cancel_order(jobname):
 if __name__ == '__main__':
     run_processing()
     # TODO write function to manually free up routes for a data file
-    # TODO write function to delete order
+    # TODO write function to delete / cancel order. Update OrderDetail.file_match
     # TODO write instructions for force_processing
     # force_processing('10085_20190803161235.dat', '35955413')
