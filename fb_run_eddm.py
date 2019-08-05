@@ -42,7 +42,7 @@ def create_database(eddm_order, fle_path, db_name, order_file, copy_to_accuzip=T
     db.open(mode=dbf.READ_WRITE)
     db_counts.open(mode=dbf.READ_WRITE)
 
-    with open(os.path.join(gblv.downloaded_orders_path, order_file), 'r') as routes:
+    with open(os.path.join(gblv.current_dat_folder, order_file), 'r') as routes:
         csvr = csv.DictReader(routes, eddm_order.dat_header, delimiter='\t')
         next(csvr)
         for rec in csvr:
@@ -117,6 +117,9 @@ def process_48_hour_dat(fle):
     eddm_order.set_mailing_residential(True)
     eddm_order.set_touch_1_maildate(fle[-18:-4])
     eddm_order.set_touch_2_maildate(fle[-18:-4])
+
+    # only used in the create_database function
+    gblv.current_dat_folder = gblv.no_match_orders_path
 
     # get number of touches in the file
     with open(os.path.join(gblv.no_match_orders_path, fle), 'r') as routes:
@@ -232,6 +235,9 @@ def process_dat(fle):
     eddm_order.set_mailing_residential(True)
     eddm_order.set_touch_1_maildate(fle[-18:-4])
     eddm_order.set_touch_2_maildate(fle[-18:-4])
+
+    # only used in the create_database function
+    gblv.current_dat_folder = gblv.downloaded_orders_path
 
     # get number of touches in the file
     with open(os.path.join(gblv.downloaded_orders_path, fle), 'r') as routes:
@@ -517,6 +523,7 @@ def process_non_match(hours):
     match to Marcom.
     """
     gblv.print_log("Processing previous non-match records")
+    gblv.current_dat_folder = gblv.no_match_orders_path
 
     # First, find out if there are any orders that haven't been matched yet.
     # If there are no orders that have not been matched, immmediately delete orders over hour threshold,
@@ -818,7 +825,7 @@ def force_processing(file_name, order_detail_order_id):
         eddm_order.processing_messages['count_match'] = False
 
     # process_path = os.path.join(gblv.downloaded_orders_path, match_search[1][2])
-    process_path = os.path.join(gblv.save_orders_path, match_search[1][2])
+    process_path = os.path.join(gblv.downloaded_orders_path, match_search[1][2])
 
     create_directory_path(process_path)
     # Copy original file into new directory, in 'original' folder
@@ -888,3 +895,7 @@ def cancel_order(jobname):
 
 if __name__ == '__main__':
     run_processing()
+    # TODO write function to manually free up routes for a data file
+    # TODO write function to delete order
+    # TODO write instructions for force_processing
+    # force_processing('10085_20190803161235.dat', '35955413')

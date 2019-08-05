@@ -93,7 +93,7 @@ class GlobalVar:
         self.complete_processing_path = os.path.join('\\\\JTSRV2', 'Grimes', 'FB_EDDM_Orders')
         self.deleted_orders_path = os.path.join('\\\\JTSRV2', 'Grimes', 'FB_EDDM_Orders')
         self.shared_path = os.path.join('\\\\JTSRV2', 'Grimes', 'FB_EDDM_Orders')
-
+        self.current_dat_folder = ''
         # self.order_db = os.path.join(self.shared_path, 'orders.db')
 
 
