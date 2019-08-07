@@ -904,4 +904,5 @@ if __name__ == '__main__':
     # TODO write function to delete / cancel order. Update OrderDetail.file_match
     # TODO write instructions for force_processing
     # TODO move folders after processing to success folder
+    # TODO update touches explicitly, instead of by swap
     # force_processing('10085_20190803161235.dat', '35955413')
