@@ -160,6 +160,7 @@ class EDDMOrder:
         self.order_qty = 0
         self.touch_1_maildate = datetime.date.today()
         self.touch_2_maildate = datetime.date.today()
+        self.session_id = ''
         self.jobname = ''
         self.processing_messages = {'count_match': True,
                                     'touch_match': True,
@@ -167,7 +168,7 @@ class EDDMOrder:
 
         self.dat_header = ["AgentID", "DateSelected", "City", "State",
                            "ZipCode", "RouteID", "Quantity", "POS",
-                           "NumberOfTouches"]
+                           "NumberOfTouches", 'SessionID']
 
     def set_mailing_residential(self, val):
         self.mail_residential = bool(val)

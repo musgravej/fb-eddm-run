@@ -424,7 +424,8 @@ def update_order_touches_table(gblv):
            "`routeid` VARCHAR(5) DEFAULT NULL,"
            "`quantity` int(8) DEFAULT NULL,"
            "`pos` int(8) DEFAULT NULL,"
-           "`number_of_touches` int(8) DEFAULT NULL);")
+           "`number_of_touches` int(8) DEFAULT NULL,"
+           "`session_id` VARCHAR(50) DEFAULT NULL);")
 
     cursor.execute(sql)
     conn.commit()
@@ -436,15 +437,16 @@ def insert_into_update_order_touches_table(gblv, filename, rec):
     cursor = conn.cursor()
     sql = ("INSERT INTO `update_touch_records` (`filename`,"
            "`agent_id`,`date_selected`,`city`,`state`,`zipcode`,"
-           "`routeid`,`quantity`,`pos`,`number_of_touches`) "
-           "VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?);")
+           "`routeid`,`quantity`,`pos`,`number_of_touches`, `session_id`) "
+           "VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);")
 
     # 7/16/2019 7:11:10 PM
     date_selected = datetime.datetime.strptime(rec['DateSelected'], "%m/%d/%Y %I:%M:%S %p")
 
     cursor.execute(sql, (filename, rec['AgentID'], date_selected, 
                          rec['City'], rec['State'], rec['ZipCode'], rec['RouteID'], 
-                         rec['Quantity'], rec['POS'], rec['NumberOfTouches']))
+                         rec['Quantity'], rec['POS'], rec['NumberOfTouches'],
+                         rec['SessionID']))
     conn.commit()
     conn.close()
 
@@ -486,7 +488,8 @@ def delete_orders_table(gblv):
            "`routeid` VARCHAR(5) DEFAULT NULL,"
            "`quantity` int(8) DEFAULT NULL,"
            "`pos` int(8) DEFAULT NULL,"
-           "`number_of_touches` int(8) DEFAULT NULL);")
+           "`number_of_touches` int(8) DEFAULT NULL,"
+           "`session_id` VARCHAR(50) DEFAULT NULL);")
 
     cursor.execute(sql)
     conn.commit()
@@ -498,15 +501,16 @@ def insert_into_delete_orders_table(gblv, filename, rec):
     cursor = conn.cursor()
     sql = ("INSERT INTO `delete_order_records` (`filename`,"
            "`agent_id`,`date_selected`,`city`,`state`,`zipcode`,"
-           "`routeid`,`quantity`,`pos`,`number_of_touches`) "
-           "VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?);")
+           "`routeid`,`quantity`,`pos`,`number_of_touches`, `session_id`) "
+           "VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);")
 
     # 7/16/2019 7:11:10 PM
     date_selected = datetime.datetime.strptime(rec['DateSelected'], "%m/%d/%Y %I:%M:%S %p")
 
     cursor.execute(sql, (filename, rec['AgentID'], date_selected, 
                          rec['City'], rec['State'], rec['ZipCode'], rec['RouteID'], 
-                         rec['Quantity'], rec['POS'], rec['NumberOfTouches']))
+                         rec['Quantity'], rec['POS'], rec['NumberOfTouches'],
+                         rec['SessionID']))
     conn.commit()
     conn.close()
 
@@ -520,6 +524,7 @@ def import_userdata(gblv):
 
     sql = "DROP TABLE IF EXISTS `v2fbluserdata`;"
     cursor.execute(sql)
+    conn.commit()
 
     sql = ("CREATE TABLE `v2fbluserdata` ("
            "`agent_id` VARCHAR(10) NOT NULL,"
@@ -710,7 +715,7 @@ def delete_order_record_unlock_routes(gblv, session_id_set):
         conn.commit()
 
 
-def order_submit_update_route_touches(gblv, session_id):
+def order_submit_update_route_touches(gblv, session_id_set):
 
     with pytds.connect(gblv.mssql_connection, 
                        gblv.mssql_database, 
@@ -718,13 +723,33 @@ def order_submit_update_route_touches(gblv, session_id):
                        gblv.mssql_pass) as conn:
 
         with conn.cursor() as cur:
-            sql = "EXEC guideone.EDDM_SwapNumberOfDrops '{}';".format(session_id)
-            # print(sql)
-            cur.execute(sql)
+            for sess_id in session_id_set:
+                sql = "EXEC guideone.EDDM_SwapNumberOfDrops '{}';".format(sess_id)
+                cur.execute(sql)
         conn.commit()
 
 
+def get_session_id_sqlite(gblv, table):
+    sql = ("SELECT `session_id` FROM `{}` GROUP BY `session_id`;".format(table))
+
+    conn = sqlite3.connect(gblv.db_name)
+    cursor = conn.cursor()
+    cursor.execute(sql)
+
+    results = cursor.fetchall()
+
+    conn.commit()
+    conn.close()
+
+    session_id_set = set()
+    for rec in results:
+        session_id_set.add(rec[0])
+
+    return session_id_set
+
+
 def update_touch_record_session_ids(gblv):
+    """DEPRECIATED, NOT USED.  SEE FUNCTION: get_session_id_sqlite"""
     sql = "SELECT agent_id, date_selected FROM update_touch_records;"
 
     conn = sqlite3.connect(gblv.db_name)
@@ -757,6 +782,7 @@ def update_touch_record_session_ids(gblv):
 
 
 def delete_order_record_session_ids(gblv):
+    """DEPRECIATED, NOT USED.  SEE FUNCTION: get_session_id_sqlite"""
     sql = "SELECT agent_id, date_selected FROM delete_order_records;"
 
     conn = sqlite3.connect(gblv.db_name)

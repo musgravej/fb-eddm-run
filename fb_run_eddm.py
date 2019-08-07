@@ -128,6 +128,7 @@ def process_48_hour_dat(fle):
         running_cnt = 0
         for rec in csvr:
             eddm_order.file_touches = int(rec['NumberOfTouches'])
+            eddm_order.session_id = rec['SessionID']
             running_cnt += int(rec['Quantity'])
 
         eddm_order.file_qty = running_cnt
@@ -148,7 +149,7 @@ def process_48_hour_dat(fle):
         # Log any non-matches
         if match_search[1][7] != match_search[1][9]:
             eddm_order.processing_messages['touch_match'] = False
-            update_touches_for_non_match(gblv.no_match_orders_path, fle, eddm_order.jobname)
+            update_touches_for_non_match(gblv.no_match_orders_path, fle, eddm_order)
 
         if match_search[1][6] != match_search[1][11]:
             eddm_order.processing_messages['count_match'] = False
@@ -187,7 +188,7 @@ def process_48_hour_dat(fle):
         # Log any non-matches
         if match_search[1][7] != match_search[1][9]:
             eddm_order.processing_messages['touch_match'] = False
-            update_touches_for_non_match(gblv.no_match_orders_path, fle, eddm_order.jobname)
+            update_touches_for_non_match(gblv.no_match_orders_path, fle, eddm_order)
 
         if match_search[1][6] != match_search[1][11]:
             eddm_order.processing_messages['count_match'] = False
@@ -246,6 +247,7 @@ def process_dat(fle):
         running_cnt = 0
         for rec in csvr:
             eddm_order.file_touches = int(rec['NumberOfTouches'])
+            eddm_order.session_id = rec['SessionID']
             running_cnt += int(rec['Quantity'])
 
         eddm_order.file_qty = running_cnt
@@ -266,13 +268,13 @@ def process_dat(fle):
         # Log any non-matches
         if match_search[1][7] != match_search[1][9]:
             eddm_order.processing_messages['touch_match'] = False
-            update_touches_for_non_match(gblv.downloaded_orders_path, fle, eddm_order.jobname)
+            update_touches_for_non_match(gblv.downloaded_orders_path, fle, eddm_order)
 
         if match_search[1][6] != match_search[1][11]:
             eddm_order.processing_messages['count_match'] = False
 
         # process_path = os.path.join(gblv.downloaded_orders_path, match_search[1][2])
-        process_path = os.path.join(gblv.save_orders_path, match_search[1][2])
+        process_path = os.path.join(gblv.downloaded_orders_path, match_search[1][2])
 
         create_directory_path(process_path)
         # Copy original file into new directory, in 'original' folder
@@ -317,7 +319,7 @@ def process_dat(fle):
         # Log any non-matches
         if match_search[1][7] != match_search[1][9]:
             eddm_order.processing_messages['touch_match'] = False
-            update_touches_for_non_match(gblv.downloaded_orders_path, fle, eddm_order.jobname)
+            update_touches_for_non_match(gblv.downloaded_orders_path, fle, eddm_order)
 
         if match_search[1][6] != match_search[1][11]:
             eddm_order.processing_messages['count_match'] = False
@@ -549,50 +551,51 @@ def process_non_match(hours):
     else:
         gblv.print_log("No unmatched Marcom orders to search")
 
-    gblv.print_log("Processing files to unlock routes")
-    get_order_by_date.delete_orders_table(gblv)
-    for order in non_match.file_over_threshold:
-        gblv.print_log("\tUnlocking routes for {}".format(order))
-        # All all records from old orders into delete_order_records table
-        with open(os.path.join(gblv.no_match_orders_path, order), 'r') as o:
-            csvr = csv.DictReader(o, ['AgentID', 'DateSelected', 'City', 'State',
-                                      'ZipCode', 'RouteID', 'Quantity', 'POS',
-                                      'NumberOfTouches'], delimiter='\t')
-            next(csvr)
-            for line in csvr:
-                get_order_by_date.insert_into_delete_orders_table(gblv, order, line)
+    if non_match.file_over_threshold:
+        gblv.print_log("Processing files to unlock routes")
+        get_order_by_date.delete_orders_table(gblv)
+        for order in non_match.file_over_threshold:
+            gblv.print_log("\tUnlocking routes for {}".format(order))
+            # All all records from old orders into delete_order_records table
+            with open(os.path.join(gblv.no_match_orders_path, order), 'r') as o:
+                csvr = csv.DictReader(o, ['AgentID', 'DateSelected', 'City', 'State',
+                                          'ZipCode', 'RouteID', 'Quantity', 'POS',
+                                          'NumberOfTouches', 'SessionID'], delimiter='\t')
+                next(csvr)
+                for line in csvr:
+                    get_order_by_date.insert_into_delete_orders_table(gblv, order, line)
 
-    # create set of session ids to unlock
-    session_id = get_order_by_date.delete_order_record_session_ids(gblv)
-    # iterate through sessions ids and unlock routes
-    get_order_by_date.delete_order_record_unlock_routes(gblv, session_id)
+        # create set of session ids to unlock
+        session_id = get_order_by_date.get_session_id_sqlite(gblv, 'delete_order_records')
+        # iterate through sessions ids and unlock routes
+        if session_id:
+            get_order_by_date.delete_order_record_unlock_routes(gblv, session_id)
 
     # Any orders that are over [hours], move to deleted directory
-    gblv.print_log("Moving orders older than {} hours to deleted directory".format(hours))
-    for order in non_match.file_over_threshold:
-        gblv.print_log("\tMoving {} to deleted_orders".format(order))
-        move_file_to_new_folder(gblv.no_match_orders_path,
-                                gblv.deleted_orders_path, order,
-                                delete_original=True)
+    if non_match.file_over_threshold:
+        gblv.print_log("Moving orders older than {} hours to deleted directory".format(hours))
+        for order in non_match.file_over_threshold:
+            gblv.print_log("\tMoving {} to deleted_orders".format(order))
+            move_file_to_new_folder(gblv.no_match_orders_path,
+                                    gblv.deleted_orders_path, order,
+                                    delete_original=True)
 
 
-def update_touches_for_non_match(processing_file_path, fle, jobname):
+def update_touches_for_non_match(processing_file_path, fle, eddm_order):
     """
     Updates Marcom for orders that don't have matching touches in Marcom and the .dat data
     """
-    gblv.print_log("Updating touch count for {}: {}".format(fle, jobname))
+    gblv.print_log("Updating touch count for {}: {}".format(fle, eddm_order.jobname))
     get_order_by_date.update_order_touches_table(gblv)
 
-    with open(os.path.join(processing_path, fle), 'r') as o:
-        csvr = csv.DictReader(o, ['AgentID', 'DateSelected', 'City', 'State',
-                                  'ZipCode', 'RouteID', 'Quantity', 'POS',
-                                  'NumberOfTouches'], delimiter='\t')
+    with open(os.path.join(processing_file_path, fle), 'r') as o:
+        csvr = csv.DictReader(o, eddm_order.dat_header, delimiter='\t')
         next(csvr)
         for line in csvr:
-            get_order_by_date.insert_into_update_order_touches_table(gblv, order, line)
+            get_order_by_date.insert_into_update_order_touches_table(gblv, fle, line)
 
     # get session id to update touches
-    session_id = get_order_by_date.update_touch_record_session_ids(gblv)
+    session_id = get_order_by_date.get_session_id_sqlite(gblv, 'update_touch_records')
     get_order_by_date.order_submit_update_route_touches(gblv, session_id)
 
 
@@ -750,7 +753,7 @@ def run_processing():
     get_order_by_date.clear_processing_files_table(gblv)
 
     # Download orders, go back two days
-    download_web_orders(2)
+    # download_web_orders(2)
 
     # Create a list of orders
     downloaded_orders = [f for f in os.listdir(gblv.downloaded_orders_path) if f[-3:].upper() == 'DAT']
@@ -804,6 +807,7 @@ def force_processing(file_name, order_detail_order_id):
         running_cnt = 0
         for rec in csvr:
             eddm_order.file_touches = int(rec['NumberOfTouches'])
+            eddm_order.session_id = rec['SessionID']
             running_cnt += int(rec['Quantity'])
 
         eddm_order.file_qty = running_cnt
@@ -875,13 +879,13 @@ def cancel_order(jobname):
         with open(os.path.join(gblv.complete_processing_path, filename), 'r') as o:
             csvr = csv.DictReader(o, ['AgentID', 'DateSelected', 'City', 'State',
                                       'ZipCode', 'RouteID', 'Quantity', 'POS',
-                                      'NumberOfTouches'], delimiter='\t')
+                                      'NumberOfTouches', 'SessionID'], delimiter='\t')
             next(csvr)
             for line in csvr:
                 get_order_by_date.insert_into_delete_orders_table(gblv, filename, line)
 
         # create set of session ids to unlock
-        session_id = get_order_by_date.delete_order_record_session_ids(gblv)
+        session_id = get_order_by_date.get_session_id_sqlite(gblv, 'delete_order_records')
         # iterate through sessions ids and unlock routes
         get_order_by_date.delete_order_record_unlock_routes(gblv, session_id)
         # update file history status
@@ -899,4 +903,5 @@ if __name__ == '__main__':
     # TODO write function to manually free up routes for a data file
     # TODO write function to delete / cancel order. Update OrderDetail.file_match
     # TODO write instructions for force_processing
+    # TODO move folders after processing to success folder
     # force_processing('10085_20190803161235.dat', '35955413')
