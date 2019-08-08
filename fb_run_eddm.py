@@ -138,7 +138,7 @@ def process_48_hour_dat(fle):
 
     if match_search[0]:
         # Successful match, all counts match, match to downloaded order data
-        gblv.print_log("Previous non-match order Full Match: {}".format(fle))
+        gblv.print_log("\tPrevious non-match order Full Match: {}".format(fle))
         # print(match_search[1])
 
         # Update touches to touch count in downloaded order data
@@ -154,7 +154,6 @@ def process_48_hour_dat(fle):
         if match_search[1][6] != match_search[1][11]:
             eddm_order.processing_messages['count_match'] = False
 
-        # process_path = os.path.join(gblv.no_match_orders_path, match_search[1][2])
         process_path = os.path.join(gblv.save_orders_path, match_search[1][2])
 
         create_directory_path(process_path)
@@ -273,8 +272,7 @@ def process_dat(fle):
         if match_search[1][6] != match_search[1][11]:
             eddm_order.processing_messages['count_match'] = False
 
-        # process_path = os.path.join(gblv.downloaded_orders_path, match_search[1][2])
-        process_path = os.path.join(gblv.downloaded_orders_path, match_search[1][2])
+        process_path = os.path.join(gblv.save_orders_path, match_search[1][2])
 
         create_directory_path(process_path)
         # Copy original file into new directory, in 'original' folder
@@ -324,7 +322,6 @@ def process_dat(fle):
         if match_search[1][6] != match_search[1][11]:
             eddm_order.processing_messages['count_match'] = False
 
-        # process_path = os.path.join(gblv.downloaded_orders_path, match_search[1][2])
         process_path = os.path.join(gblv.hold_orders_path, match_search[1][2])
 
         create_directory_path(process_path)
@@ -349,7 +346,7 @@ def process_dat(fle):
         create_directory_path(gblv.duplicate_orders_path)
         # Copy file to complete_processing_files path
         move_file_to_new_folder(gblv.downloaded_orders_path, gblv.complete_processing_path, fle)
-        # Copy file to no duplicates folder, and delete from downloaded orders path
+        # Copy file to duplicates folder, and delete from downloaded orders path
         move_file_to_new_folder(gblv.downloaded_orders_path,
                                 gblv.duplicate_orders_path,
                                 fle, delete_original=gblv.delete_original_files)
@@ -549,7 +546,7 @@ def process_non_match(hours):
         for order in non_match.file_under_threshold:
             process_48_hour_dat(order)
     else:
-        gblv.print_log("No unmatched Marcom orders to search")
+        gblv.print_log("\tNo unmatched Marcom orders to search")
 
     if non_match.file_over_threshold:
         gblv.print_log("Processing files to unlock routes")
@@ -659,48 +656,82 @@ def write_message_log():
         for message in gblv.log_messages:
             log.write("{}\n".format(message))
 
-        log.write("\n\n")
-        log.write("Summary of files processed:\n\n")
-        log.write("{:<28}{:<24}{:<24}{:<14}{:>10}{:>15}{:>15}"
-                  "{:>17}{:>5}{:<100}\n".format("filename",
-                                                "jobname",
-                                                "order date",
-                                                "mailing date",
-                                                "file count",
-                                                "file touches",
-                                                "marcom count",
-                                                "marcom touches",
-                                                "",
-                                                "status"))
+        if get_order_by_date.processing_files_log(gblv):
+            log.write("\n\nSummary of new files processed:\n\n")
+            log.write("{:<28}{:<24}{:<24}{:<14}{:>10}{:>15}{:>15}"
+                      "{:>17}{:>5}{:<100}\n".format("filename",
+                                                    "jobname",
+                                                    "order date",
+                                                    "mailing date",
+                                                    "file count",
+                                                    "file touches",
+                                                    "marcom count",
+                                                    "marcom touches",
+                                                    "",
+                                                    "status"))
 
-        for line in get_order_by_date.processing_files_log(gblv):
-            log.write("{:<28}{:<24}{:<24}{:<14}{:>10,}{:>15,}"
-                      "{:>15,}{:>17,}{:>5}{:<100}\n".format(line[0],
-                                                            line[1],
-                                                            line[2],
-                                                            line[8],
-                                                            line[3],
-                                                            line[4],
-                                                            line[5],
-                                                            line[6],
-                                                            "",
-                                                            line[7]))
+            for line in get_order_by_date.processing_files_log(gblv):
+                log.write("{:<28}{:<24}{:<24}{:<14}{:>10,}{:>15,}"
+                          "{:>15,}{:>17,}{:>5}{:<100}\n".format(line[0],
+                                                                line[1],
+                                                                line[2],
+                                                                line[8],
+                                                                line[3],
+                                                                line[4],
+                                                                line[5],
+                                                                line[6],
+                                                                "",
+                                                                line[7]))
+        else:
+            log.write("\n\nNo new files processed\n")
 
-        log.write("\n\nUnmatched Marcom orders:\n\n")
-        log.write("{:<23}{:<10}{:<12}{:<18}{:<12}{:>8}\n".format("Order Date",
-                                                                 "User ID",
-                                                                 "Order ID",
-                                                                 "Order Detail ID",
-                                                                 "Order Number",
-                                                                 "Qty"))
+        if get_order_by_date.nomatch_processing_files_log(gblv):
+            log.write("\n\nSummary of non-match files processed:\n\n")
+            log.write("{:<28}{:<24}{:<24}{:<14}{:>10}{:>15}{:>15}"
+                      "{:>17}{:>5}{:<100}\n".format("filename",
+                                                    "jobname",
+                                                    "order date",
+                                                    "mailing date",
+                                                    "file count",
+                                                    "file touches",
+                                                    "marcom count",
+                                                    "marcom touches",
+                                                    "",
+                                                    "status"))
 
-        for line in get_order_by_date.marcom_orders_unmatched(gblv):
-            log.write("{:<23}{:<10}{:<12}{:<18}{:<12}{:>8,}\n".format(line[0],
-                                                                      line[1],
-                                                                      line[2],
-                                                                      line[3],
-                                                                      line[4],
-                                                                      line[5]))
+            for line in get_order_by_date.nomatch_processing_files_log(gblv):
+                log.write("{:<28}{:<24}{:<24}{:<14}{:>10,}{:>15,}"
+                          "{:>15,}{:>17,}{:>5}{:<100}\n".format(line[0],
+                                                                line[1],
+                                                                line[2],
+                                                                line[8],
+                                                                line[3],
+                                                                line[4],
+                                                                line[5],
+                                                                line[6],
+                                                                "",
+                                                                line[7]))
+        else:
+            log.write("\n\nNo non-match files processed\n")
+
+        if get_order_by_date.marcom_orders_unmatched(gblv):
+            log.write("\n\nUnmatched Marcom orders:\n\n")
+            log.write("{:<23}{:<10}{:<12}{:<18}{:<12}{:>8}\n".format("Order Date",
+                                                                     "User ID",
+                                                                     "Order ID",
+                                                                     "Order Detail ID",
+                                                                     "Order Number",
+                                                                     "Qty"))
+
+            for line in get_order_by_date.marcom_orders_unmatched(gblv):
+                log.write("{:<23}{:<10}{:<12}{:<18}{:<12}{:>8,}\n".format(line[0],
+                                                                          line[1],
+                                                                          line[2],
+                                                                          line[3],
+                                                                          line[4],
+                                                                          line[5]))
+        else:
+            log.write("\n\nNo unmatched Marcom orders\n")
 
 
 def set_up_functions():
@@ -753,7 +784,7 @@ def run_processing():
     get_order_by_date.clear_processing_files_table(gblv)
 
     # Download orders, go back two days
-    # download_web_orders(2)
+    download_web_orders(2)
 
     # Create a list of orders
     downloaded_orders = [f for f in os.listdir(gblv.downloaded_orders_path) if f[-3:].upper() == 'DAT']
@@ -852,9 +883,9 @@ def force_processing(file_name, order_detail_order_id):
     write_message_log()
 
 
-def cancel_order(jobname):
+def unlock_file_routes(filename):
     """
-    Manually opens routes for jobname.  File must still exist in gblv.complete_processing_path
+    Manually opens routes for filename.  File must still exist in gblv.complete_processing_path
     Updates file processing history status to DELETED [Date]
     """
     global gblv
@@ -867,7 +898,7 @@ def cancel_order(jobname):
     gblv.set_token_name()
     gblv.set_db_name()
 
-    qry_resl = get_order_by_date.qry_processing_files_history(gblv, jobname)
+    qry_resl = get_order_by_date.qry_processing_files_history(gblv, filename)
     if int(qry_resl[0][0]) != 0:
         filename = qry_resl[0][1]
         job = qry_resl[0][2]
@@ -891,18 +922,40 @@ def cancel_order(jobname):
         # update file history status
         process_date = datetime.datetime.strftime(datetime.datetime.today(), "%m/%d/%Y")
         get_order_by_date.status_update_processing_history_table(gblv, filename, "JOB CANCELLED, Routes unlocked"
-                                                                             " {}".format(process_date))
+                                                                 " {}".format(process_date))
 
     else:
-        print("No order match found for jobname {}".format(jobname))
+        print("No order match found for file {}".format(filename))
+        time.sleep(4)
+
+
+def cancel_order(order_order_number):
+    """
+    Updates OrderDetail table for matching order number, sets file_match to 'CANCELLED'
+    """
+    global gblv
+    gblv = settings.GlobalVar()
+    # Set environment to 'PRODUCTION' for production
+    # gblv.set_environment('QA')
+    gblv.set_environment('PRODUCTION')
+    gblv.set_order_paths()
+    gblv.create_accuzip_dir()
+    gblv.set_token_name()
+    gblv.set_db_name()
+    status = get_order_by_date.cancel_order_detail_order(gblv, order_order_number, "JOB CANCELLED")
+
+    if status:
+        print("Cancelled order {}".format(order_order_number))
+        time.sleep(4)
+    else:
+        print("No order match found for order {}".format(order_order_number))
         time.sleep(4)
 
 
 if __name__ == '__main__':
     run_processing()
-    # TODO write function to manually free up routes for a data file
-    # TODO write function to delete / cancel order. Update OrderDetail.file_match
     # TODO write instructions for force_processing
-    # TODO move folders after processing to success folder
     # TODO update touches explicitly, instead of by swap
     # force_processing('10085_20190803161235.dat', '35955413')
+    # unlock_file_routes()
+    # cancel_order('FB162036')

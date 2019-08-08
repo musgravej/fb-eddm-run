@@ -632,6 +632,20 @@ def status_update_processing_history_table(gblv, filename, message):
     conn.close()
 
 
+def cancel_order_detail_order(gblv, order_number, message):
+
+    sql = ("UPDATE `OrderDetail` SET `file_match` = ? "
+           "where `order_order_number` = ?;")
+
+    conn = sqlite3.connect(gblv.db_name)
+    cursor = conn.cursor()
+    cursor.execute(sql, (message, order_number))
+    status = cursor.rowcount
+    conn.commit()
+    conn.close()
+    return status
+
+
 def status_update_processing_no_match_table(gblv, filename, message):
 
     sql = ("UPDATE `NoMatchFiles` SET `status` = ? "
@@ -662,6 +676,27 @@ def count_unmatched_orders_order_detail(gblv):
     conn = sqlite3.connect(gblv.db_name)
     cursor = conn.cursor()
     cursor.execute(sql)
+    results = cursor.fetchall()
+
+    conn.commit()
+    conn.close()
+
+    return results
+
+
+def nomatch_processing_files_log(gblv):
+    sql = ('SELECT * FROM (SELECT a.filename, IFNULL(b.jobname, "")'
+           ", DATETIME(a.order_datetime_utc, 'localtime'), "
+           "a.order_records, a.order_file_touches, IFNULL(a.marcom_records, 0), "
+           "IFNULL(a.marcom_order_touches, 0), a.status, "
+           "IFNULL(b.mailing_date, '') FROM NomatchFiles a LEFT JOIN "
+           "filehistory b ON substr(a.jobname, 1, 17) = substr(b.jobname, 1, 17) "
+           "ORDER BY a.order_datetime_utc ASC);")
+
+    conn = sqlite3.connect(gblv.db_name)
+    cursor = conn.cursor()
+    cursor.execute(sql)
+
     results = cursor.fetchall()
 
     conn.commit()
