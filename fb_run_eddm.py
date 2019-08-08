@@ -650,7 +650,7 @@ def job_agent_status(days):
 def write_message_log():
 
     log_filename = "LOG_{datestring}.txt".format(
-            datestring=datetime.datetime.strftime(datetime.datetime.now(), "%Y-%m-%d_%I %M %p"))
+            datestring=datetime.datetime.strftime(datetime.datetime.now(), "%Y-%m-%d_%H%M%S"))
 
     with open(os.path.join(gblv.shared_path, log_filename), 'w+') as log:
         for message in gblv.log_messages:
