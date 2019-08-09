@@ -954,8 +954,4 @@ def cancel_order(order_order_number):
 
 if __name__ == '__main__':
     run_processing()
-    # TODO write instructions for force_processing
     # TODO update touches explicitly, instead of by swap
-    # force_processing('10085_20190803161235.dat', '35955413')
-    # unlock_file_routes()
-    # cancel_order('FB162036')
