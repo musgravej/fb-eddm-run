@@ -533,13 +533,15 @@ def import_userdata(gblv):
            "`lname` VARCHAR(60) DEFAULT NULL,"
            "`cancel_date` DATETIME NULL DEFAULT NULL,"
            "`file_update_date` DATETIME NULL DEFAULT NULL,"
-           "`agency_address1` VARCHAR(100) NULL DEFAULT NULL,"
-           "`agency_address2` VARCHAR(100) NULL DEFAULT NULL,"
-           "`agency_city` VARCHAR(100) NULL DEFAULT NULL,"
+           "`agency_address1` VARCHAR(50) NULL DEFAULT NULL,"
+           "`agency_address2` VARCHAR(50) NULL DEFAULT NULL,"
+           "`agency_city` VARCHAR(50) NULL DEFAULT NULL,"
            "`agency_state` VARCHAR(2) NULL DEFAULT NULL,"
-           "`agency_zip` VARCHAR(100) NULL DEFAULT NULL,"
+           "`agency_zip` VARCHAR(10) NULL DEFAULT NULL,"
            "`agent_email` VARCHAR(100) NULL DEFAULT NULL,"
            "`agent_state` VARCHAR(2) NULL DEFAULT NULL,"
+           "`agent_reg_rep` VARCHAR(2) NULL DEFAULT NULL,"
+           "`agent_job_desc` VARCHAR(25) NULL DEFAULT NULL,"
            "PRIMARY KEY (`agent_id`));")
     cursor.execute(sql)
 
@@ -560,12 +562,15 @@ def import_userdata(gblv):
                       else "{}".format(line[1082:1087].strip()))
             agent_email = line[680:930].strip()
             agent_state = line[25:27].strip()
+            agent_reg_rep = line[603:604].strip()
+            agent_job_desc = line[604:629].strip()
 
             sql = ("INSERT INTO `v2fbluserdata` VALUES (?,?,?,?,?, datetime('now', 'localtime')"
-                   ",?,?,?,?,?,?,?);")
+                   ",?,?,?,?,?,?,?,?,?);")
             cursor.execute(sql, (agentid, nickname, fname, lname, cancel_date,
                                  agency_address1, agency_address2, agency_city, 
-                                 agency_state, agency_zip, agent_email, agent_state,))
+                                 agency_state, agency_zip, agent_email, agent_state,
+                                 agent_reg_rep, agent_job_desc,))
 
     conn.commit()
 
