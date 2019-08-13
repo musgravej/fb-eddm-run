@@ -533,6 +533,13 @@ def import_userdata(gblv):
            "`lname` VARCHAR(60) DEFAULT NULL,"
            "`cancel_date` DATETIME NULL DEFAULT NULL,"
            "`file_update_date` DATETIME NULL DEFAULT NULL,"
+           "`agency_address1` VARCHAR(100) NULL DEFAULT NULL,"
+           "`agency_address2` VARCHAR(100) NULL DEFAULT NULL,"
+           "`agency_city` VARCHAR(100) NULL DEFAULT NULL,"
+           "`agency_state` VARCHAR(2) NULL DEFAULT NULL,"
+           "`agency_zip` VARCHAR(100) NULL DEFAULT NULL,"
+           "`agent_email` VARCHAR(100) NULL DEFAULT NULL,"
+           "`agent_state` VARCHAR(2) NULL DEFAULT NULL,"
            "PRIMARY KEY (`agent_id`));")
     cursor.execute(sql)
 
@@ -544,9 +551,21 @@ def import_userdata(gblv):
             lname = line[213:273].strip()
             cancel_date = (datetime.datetime.strptime(line[386:394], '%Y%m%d')
                            if not line[386:394] == '00000000' else None)
+            agency_address1 = line[930:980].strip()
+            agency_address2 = line[980:1030].strip()
+            agency_city = line[1030:1080].strip()
+            agency_state = line[1080:1082].strip()
+            agency_zip = ("{}-{}".format(line[1082:1087].strip(), line[1087:1091].strip()) 
+                          if line[1087:1091].strip() != '0000' 
+                      else "{}".format(line[1082:1087].strip()))
+            agent_email = line[680:930].strip()
+            agent_state = line[25:27].strip()
 
-            sql = "INSERT INTO `v2fbluserdata` VALUES (?,?,?,?,?, datetime('now', 'localtime'));"
-            cursor.execute(sql, (agentid, nickname, fname, lname, cancel_date,))
+            sql = ("INSERT INTO `v2fbluserdata` VALUES (?,?,?,?,?, datetime('now', 'localtime')"
+                   ",?,?,?,?,?,?,?);")
+            cursor.execute(sql, (agentid, nickname, fname, lname, cancel_date,
+                                 agency_address1, agency_address2, agency_city, 
+                                 agency_state, agency_zip, agent_email, agent_state,))
 
     conn.commit()
 
@@ -750,8 +769,26 @@ def delete_order_record_unlock_routes(gblv, session_id_set):
         conn.commit()
 
 
-def order_submit_update_route_touches(gblv, session_id_set):
+def order_submit_update_route_touches(gblv, session_id_set, touches):
 
+    with pytds.connect(gblv.mssql_connection, 
+                       gblv.mssql_database, 
+                       gblv.mssql_user, 
+                       gblv.mssql_pass) as conn:
+
+        with conn.cursor() as cur:
+            for sess_id in session_id_set:
+                sql = ("EXEC guideone.EDDM_ChangeNumberOfDrops "
+                       "@SessionId = '{0}', @NumberOfDrops = '{1}';".format(sess_id,
+                                                                           touches))
+                cur.execute(sql)
+        conn.commit()
+
+
+def order_submit_update_route_touches_DEPRECIATED(gblv, session_id_set):
+    """
+    DEPRECIATED, see updated function, order_submit_update_route_touches
+    """
     with pytds.connect(gblv.mssql_connection, 
                        gblv.mssql_database, 
                        gblv.mssql_user, 

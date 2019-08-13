@@ -583,6 +583,7 @@ def update_touches_for_non_match(processing_file_path, fle, eddm_order):
     Updates Marcom for orders that don't have matching touches in Marcom and the .dat data
     """
     gblv.print_log("Updating touch count for {}: {}".format(fle, eddm_order.jobname))
+    # Create a table of order records that need to be updated
     get_order_by_date.update_order_touches_table(gblv)
 
     with open(os.path.join(processing_file_path, fle), 'r') as o:
@@ -593,7 +594,7 @@ def update_touches_for_non_match(processing_file_path, fle, eddm_order):
 
     # get session id to update touches
     session_id = get_order_by_date.get_session_id_sqlite(gblv, 'update_touch_records')
-    get_order_by_date.order_submit_update_route_touches(gblv, session_id)
+    get_order_by_date.order_submit_update_route_touches(gblv, session_id, eddm_order.order_touches)
 
 
 def date_ordered_file_list(eval_list):
@@ -781,6 +782,7 @@ def run_processing():
     gblv.print_log("Import complete")
     gblv.print_log("Vacuuming database")
     get_order_by_date.vacuum_database(gblv)
+
     get_order_by_date.clear_processing_files_table(gblv)
 
     # Download orders, go back two days
@@ -954,4 +956,4 @@ def cancel_order(order_order_number):
 
 if __name__ == '__main__':
     run_processing()
-    # TODO update touches explicitly, instead of by swap
+    # TODO manually look up name from F2VBLUSERDATA
