@@ -656,6 +656,29 @@ def status_update_processing_history_table(gblv, filename, message):
     conn.close()
 
 
+def dict_factory(cursor, row):
+    d = {}
+    for idx, col in enumerate(cursor.description):
+        d[col[0]] = row[idx]
+    return d
+
+
+def search_v2fbl(gblv, search_field, search_string):
+
+    sql = ("SELECT * FROM v2fbluserdata WHERE {0} LIKE '%{1}%' ;".format(search_field, search_string))
+
+    conn = sqlite3.connect(gblv.db_name)
+    conn.row_factory = dict_factory
+    cursor = conn.cursor()
+    cursor.execute(sql)
+
+    results = cursor.fetchall()
+
+    conn.commit()
+    conn.close()
+    return results
+
+
 def cancel_order_detail_order(gblv, order_number, message):
 
     sql = ("UPDATE `OrderDetail` SET `file_match` = ? "

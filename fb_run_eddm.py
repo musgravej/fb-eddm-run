@@ -828,6 +828,11 @@ def force_processing(file_name, order_detail_order_id):
     gblv.set_token_name()
     gblv.set_db_name()
 
+    if not os.path.exists(os.path.join(gblv.downloaded_orders_path, file_name)):
+        print("'{0}' not found in {1}".format(file_name, gblv.downloaded_orders_path))
+        time.sleep(4)
+        return -1
+
     eddm_order = settings.EDDMOrder()
     eddm_order.set_mailing_residential(True)
     eddm_order.set_touch_1_maildate(file_name[-18:-4])
@@ -885,9 +890,9 @@ def force_processing(file_name, order_detail_order_id):
     write_message_log()
 
 
-def unlock_file_routes(filename):
+def unlock_file_routes(file_name):
     """
-    Manually opens routes for filename.  File must still exist in gblv.complete_processing_path
+    Manually opens routes for file_name.  File must still exist in gblv.complete_processing_path
     Updates file processing history status to DELETED [Date]
     """
     global gblv
@@ -900,22 +905,27 @@ def unlock_file_routes(filename):
     gblv.set_token_name()
     gblv.set_db_name()
 
-    qry_resl = get_order_by_date.qry_processing_files_history(gblv, filename)
+    if not os.path.exists(os.path.join(gblv.complete_processing_path, file_name)):
+        print("'{0}' not found in {1}".format(file_name, gblv.complete_processing_path))
+        time.sleep(4)
+        return -1
+
+    qry_resl = get_order_by_date.qry_processing_files_history(gblv, file_name)
     if int(qry_resl[0][0]) != 0:
-        filename = qry_resl[0][1]
+        file_name = qry_resl[0][1]
         job = qry_resl[0][2]
         qty = qry_resl[0][3]
 
         get_order_by_date.delete_orders_table(gblv)
         gblv.print_log("\tUnlocking routes for {}".format(job))
         # All all records from old orders into delete_order_records table
-        with open(os.path.join(gblv.complete_processing_path, filename), 'r') as o:
+        with open(os.path.join(gblv.complete_processing_path, file_name), 'r') as o:
             csvr = csv.DictReader(o, ['AgentID', 'DateSelected', 'City', 'State',
                                       'ZipCode', 'RouteID', 'Quantity', 'POS',
                                       'NumberOfTouches', 'SessionID'], delimiter='\t')
             next(csvr)
             for line in csvr:
-                get_order_by_date.insert_into_delete_orders_table(gblv, filename, line)
+                get_order_by_date.insert_into_delete_orders_table(gblv, file_name, line)
 
         # create set of session ids to unlock
         session_id = get_order_by_date.get_session_id_sqlite(gblv, 'delete_order_records')
@@ -923,11 +933,36 @@ def unlock_file_routes(filename):
         get_order_by_date.delete_order_record_unlock_routes(gblv, session_id)
         # update file history status
         process_date = datetime.datetime.strftime(datetime.datetime.today(), "%m/%d/%Y")
-        get_order_by_date.status_update_processing_history_table(gblv, filename, "JOB CANCELLED, Routes unlocked"
+        get_order_by_date.status_update_processing_history_table(gblv, file_name, "JOB CANCELLED, Routes unlocked"
                                                                  " {}".format(process_date))
 
     else:
-        print("No order match found for file {}".format(filename))
+        print("No order match found for file {}".format(file_name))
+        time.sleep(4)
+
+
+def search_v2fbluserdata(search_field, search_string):
+    """
+    """
+    global gblv
+    gblv = settings.GlobalVar()
+    # Set environment to 'PRODUCTION' for production
+    # gblv.set_environment('QA')
+    gblv.set_environment('PRODUCTION')
+    gblv.set_order_paths()
+    gblv.create_accuzip_dir()
+    gblv.set_token_name()
+    gblv.set_db_name()
+    results = get_order_by_date.search_v2fbl(gblv, search_field, search_string)
+
+    if results:
+        print("\nQuery Results:\n")
+        for n, result in enumerate(results, 1):
+            for k, v in result.items():
+                print("\t{0}: {1}".format(k, v))
+            print("\n")
+    else:
+        print("No match in V2FBLUserData for {0} = {1}".format(search_field, search_string))
         time.sleep(4)
 
 
@@ -956,4 +991,3 @@ def cancel_order(order_order_number):
 
 if __name__ == '__main__':
     run_processing()
-    # TODO manually look up name from F2VBLUSERDATA
