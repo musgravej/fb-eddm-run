@@ -79,7 +79,7 @@ def search_v2_task():
         time.sleep(2)
         main()
 
-    fields = ['agent_id', 'fname', 'lname', 'agent_email']
+    fields = ['', 'agent_id', 'fname', 'lname', 'agent_email']
 
     fb_run_eddm.search_v2fbluserdata(fields[search_field], search_string.strip())
 

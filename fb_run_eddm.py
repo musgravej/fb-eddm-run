@@ -956,11 +956,12 @@ def search_v2fbluserdata(search_field, search_string):
     results = get_order_by_date.search_v2fbl(gblv, search_field, search_string)
 
     if results:
-        print("\nQuery Results:\n")
-        for n, result in enumerate(results, 1):
-            for k, v in result.items():
-                print("\t{0}: {1}".format(k, v))
-            print("\n")
+        with open("V2FBLUserData Search Results.txt", "w+") as s:
+            s.write("Query Results:\n\n")
+            for n, result in enumerate(results, 1):
+                for k, v in result.items():
+                    s.write("\t{0}: {1}\n".format(k, v))
+                s.write("\n")
     else:
         print("No match in V2FBLUserData for {0} = {1}".format(search_field, search_string))
         time.sleep(4)
