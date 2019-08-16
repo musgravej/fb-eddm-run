@@ -91,18 +91,19 @@ def cancel_order_task():
                     "\tattempt to find a match to files in the non-match orders.  This should\n"
                     "\tbe done to keep the reports clear of error messages and maintain\n" 
                     "\ta clean database.  Call function fb_run_eddm.cancel_order() with\n" 
-                    "\tthe order detail id from `OrderDetail`.`order_detail_id`.\n")
+                    "\tthe order detail id from `OrderDetail`.`order_order_number`.\n"
+                    "\tEx: fb_run_eddm.cancel_order('FB161309')\n")
 
     print(print_string)
 
-    order_detail_id = input("order detail id: ")
+    order_number = input("order detail id: ")
 
-    if order_detail_id == '':
+    if order_number == '':
         print("Enter order detail id")
         time.sleep(2)
         main()
 
-    fb_run_eddm.cancel_order(order_detail_id.strip())
+    fb_run_eddm.cancel_order(order_number.strip().upper())
 
 
 def main():
