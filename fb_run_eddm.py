@@ -66,8 +66,8 @@ def create_database(eddm_order, fle_path, db_name, order_file, copy_to_accuzip=T
 
     if copy_to_accuzip:
         gblv.print_log("\tmoving to accuzip folder: {}".format(db_name))
-        shutil.copy(os.path.join(fle_path, "{}.dbf".format(db_name)),
-                    os.path.join(gblv.accuzip_path, "{}.dbf".format(db_name)))
+        shutil.copy2(os.path.join(fle_path, "{}.dbf".format(db_name)),
+                     os.path.join(gblv.accuzip_path, "{}.dbf".format(db_name)))
 
 
 def write_azzuzip_files(eddm_order, fle_path, fle, match_search, copy_to_accuzip=True):

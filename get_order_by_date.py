@@ -948,12 +948,12 @@ def jobs_mailing_agent_status(gblv, days):
     """
     sql = ("SELECT a.jobname, a.mailing_date, a.user_id, "
            "b.agent_id, CASE WHEN b.cancel_date IS NULL THEN 'ACTIVE' "
-           "ELSE 'INACTIVE' END , (b.nickname||" "||b.lname) "
+           "ELSE 'INACTIVE' END , (b.nickname||' '||b.lname) "
            "FROM FileHistory a JOIN v2fbluserdata b ON a.user_id = b.agent_id "
            "JOIN OrderDetail c ON c.order_order_number = substr(a.jobname, 1, 8) "
            "WHERE c.file_match != 'JOB CANCELLED' AND "
            "CAST((julianday(a.mailing_date) - JULIANDAY(date('now', 'localtime'))) "
-           "AS INTEGER ) BETWEEN 0 AND 5 ORDER BY a.mailing_date ASC ;")
+           "AS INTEGER ) BETWEEN 0 AND ? ORDER BY a.mailing_date ASC;")
 
     conn = sqlite3.connect(gblv.db_name)
     cursor = conn.cursor()
