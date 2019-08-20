@@ -679,6 +679,33 @@ def search_v2fbl(gblv, search_field, search_string):
     return results
 
 
+def search_jobs(gblv, where_clause):
+
+    sql = ("SELECT a.user_id 'User ID', c.agent_state 'Agent State'"
+           ", c.fname||' '||c.lname 'Agent Name',CASE WHEN "
+           "(quantity % 100) != 0 THEN '' else 'INACTIVE' END 'Status', "
+           "a.quantity 'Quantity', a.order_order_number, "
+           "b.total_touches 'Touches', DATE(b.mailing_date) "
+           "'Mailing Date', DATE(b.processing_date) 'Processing Date', "
+           "d.filename 'File' FROM orderdetail a LEFT JOIN "
+           "FileHistory b ON substr(b.jobname, 1, 8) = "
+           "a.order_order_number JOIN v2fbluserdata c ON "
+           "a.user_id = c.agent_id JOIN ProcessingFilesHistory d "
+           "ON substr(d.jobname, 1, 8) = a.order_order_number {0} "
+           "ORDER by a.order_order_number;".format(where_clause))
+
+    conn = sqlite3.connect(gblv.db_name)
+    conn.row_factory = dict_factory
+    cursor = conn.cursor()
+    cursor.execute(sql)
+
+    results = cursor.fetchall()
+
+    conn.commit()
+    conn.close()
+    return results
+
+
 def cancel_order_detail_order(gblv, order_number, message):
 
     sql = ("UPDATE `OrderDetail` SET `file_match` = ? "
@@ -920,12 +947,13 @@ def jobs_mailing_agent_status(gblv, days):
     with jobs mailing in the next [days] from today
     """
     sql = ("SELECT a.jobname, a.mailing_date, a.user_id, "
-           "b.agent_id, case when b.cancel_date is null "
-           "then 'ACTIVE' else 'INACTIVE' END "
-           ', (b.nickname||" "||b.lname) FROM FileHistory a '
-           "JOIN v2fbluserdata b ON a.user_id = b.agent_id WHERE "
-           "cast((julianday(a.mailing_date) - julianday(date('now', 'localtime'))) "
-           "as INTEGER ) BETWEEN 0 AND ? ORDER BY a.mailing_date ASC;")
+           "b.agent_id, CASE WHEN b.cancel_date IS NULL THEN 'ACTIVE' "
+           "ELSE 'INACTIVE' END , (b.nickname||" "||b.lname) "
+           "FROM FileHistory a JOIN v2fbluserdata b ON a.user_id = b.agent_id "
+           "JOIN OrderDetail c ON c.order_order_number = substr(a.jobname, 1, 8) "
+           "WHERE c.file_match != 'JOB CANCELLED' AND "
+           "CAST((julianday(a.mailing_date) - JULIANDAY(date('now', 'localtime'))) "
+           "AS INTEGER ) BETWEEN 0 AND 5 ORDER BY a.mailing_date ASC ;")
 
     conn = sqlite3.connect(gblv.db_name)
     cursor = conn.cursor()

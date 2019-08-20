@@ -967,6 +967,38 @@ def search_v2fbluserdata(search_field, search_string):
         time.sleep(4)
 
 
+def search_jobs(criteria, search_string):
+    """
+    """
+    global gblv
+    gblv = settings.GlobalVar()
+    # Set environment to 'PRODUCTION' for production
+    # gblv.set_environment('QA')
+    gblv.set_environment('PRODUCTION')
+    gblv.set_order_paths()
+    gblv.create_accuzip_dir()
+    gblv.set_token_name()
+    gblv.set_db_name()
+
+    where_clause = ["", "WHERE a.user_id = '{}'".format(search_string), 
+                    "WHERE c.lname LIKE '%{}%'".format(search_string), 
+                    "WHERE a.order_order_number = '{}'".format(search_string),
+                    "WHERE d.filename = '{}'".format(search_string)]
+
+    results = get_order_by_date.search_jobs(gblv, where_clause[criteria])
+
+    if results:
+        with open("Job Search Results.txt", "w+") as s:
+            s.write("Query Results:\n\n")
+            for n, result in enumerate(results, 1):
+                for k, v in result.items():
+                    s.write("\t{0}: {1}\n".format(k, v))
+                s.write("\n")
+    else:
+        print("No live job match for search criteria:\n{0}".format(where_clause[criteria]))
+        time.sleep(4)
+
+
 def cancel_order(order_order_number):
     """
     Updates OrderDetail table for matching order number, sets file_match to 'CANCELLED'
@@ -991,5 +1023,4 @@ def cancel_order(order_order_number):
 
 
 if __name__ == '__main__':
-    # TODO manual process to search orders by agent name, agent number
     run_processing()
