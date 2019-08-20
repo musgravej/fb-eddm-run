@@ -27,6 +27,7 @@ def force_process_task():
 
     fb_run_eddm.force_processing(file_name.strip(), order_detail_id.strip())
     print("\n\n")
+    main()
 
 
 def unlock_routes_task():
@@ -49,6 +50,7 @@ def unlock_routes_task():
 
     fb_run_eddm.unlock_file_routes(file_name.strip())
     print("\n\n")
+    main()
 
 
 def job_search_task():

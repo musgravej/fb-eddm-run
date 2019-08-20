@@ -456,7 +456,7 @@ def qry_processing_files_history(gblv, jobname):
     cursor = conn.cursor()
 
     sql = ("SELECT count(*), filename, jobname, order_records FROM `ProcessingFilesHistory` "
-           "WHERE jobname LIKE '{}%';".format(jobname))
+           "WHERE filename LIKE '{}%';".format(jobname))
 
     cursor.execute(sql)
     results = cursor.fetchall()
