@@ -58,7 +58,7 @@ def job_search_task():
                     "Search for jobs by criteria:\n"
                     "\t1: Agent ID\n"
                     "\t2: Agent Last Name\n"
-                    "\t3: Order Number\n"
+                    "\t3: Order Number (ex: FB161788)\n"
                     "\t4: File name (ex: '10063_20190718191231.dat')\n")
 
     print(print_string)
