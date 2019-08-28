@@ -917,7 +917,7 @@ def unlock_file_routes(file_name):
         qty = qry_resl[0][3]
 
         get_order_by_date.delete_orders_table(gblv)
-        gblv.print_log("\tUnlocking routes for {}".format(job))
+        gblv.print_log("\tUnlocking routes for {}".format(file_name))
         # All all records from old orders into delete_order_records table
         with open(os.path.join(gblv.complete_processing_path, file_name), 'r') as o:
             csvr = csv.DictReader(o, ['AgentID', 'DateSelected', 'City', 'State',
