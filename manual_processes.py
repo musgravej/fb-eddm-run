@@ -146,6 +146,7 @@ def cancel_order_task():
 
     fb_run_eddm.cancel_order(order_number.strip().upper())
     print("\n\n")
+    main()
 
 
 def main():
