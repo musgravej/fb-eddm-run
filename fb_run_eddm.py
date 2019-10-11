@@ -473,6 +473,8 @@ def download_web_orders(back_days):
     date_end = datetime.datetime.today()
     date_start = date_end - datetime.timedelta(days=back_days)
 
+    print("Searching back {} days for new orders".format(back_days))
+
     gblv.print_log("Downloading orders from {} to {}".format(datetime.datetime.strftime(date_start, "%m/%d/%Y"),
                                                              datetime.datetime.strftime(date_end, "%m/%d/%Y")))
 
@@ -786,7 +788,7 @@ def run_processing():
     get_order_by_date.clear_processing_files_table(gblv)
 
     # Download orders, go back n days
-    download_web_orders(g.fetch_n_days)
+    download_web_orders(gblv.fetch_n_days)
 
     # Create a list of orders
     downloaded_orders = [f for f in os.listdir(gblv.downloaded_orders_path) if f[-3:].upper() == 'DAT']
