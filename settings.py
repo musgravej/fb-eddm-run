@@ -39,6 +39,8 @@ class GlobalVar:
         self.mssql_user = config['mssql']['user']
         self.mssql_pass = config['mssql']['pass']
 
+        self.fetch_n_days = config['settings']['n_days']
+
         # VERY IMPORTANT
         self.environment = ''
         self.token = ''
@@ -96,7 +98,6 @@ class GlobalVar:
         self.current_dat_folder = ''
 
         # self.order_db = os.path.join(self.shared_path, 'orders.db')
-
 
         self.log_messages = []
         self.delete_original_files = True
