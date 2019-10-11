@@ -788,7 +788,7 @@ def run_processing():
     get_order_by_date.clear_processing_files_table(gblv)
 
     # Download orders, go back n days
-    download_web_orders(gblv.fetch_n_days)
+    download_web_orders(int(gblv.fetch_n_days))
 
     # Create a list of orders
     downloaded_orders = [f for f in os.listdir(gblv.downloaded_orders_path) if f[-3:].upper() == 'DAT']
