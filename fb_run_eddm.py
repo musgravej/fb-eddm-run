@@ -12,6 +12,12 @@ import get_order_by_date
 import fpdf
 import time
 
+# TODO Clean Up NoOrderMatch table
+""" somewhere here there's an error where records in the NoOrderMatch table
+    are not being removed in a condition where there are no previously unmatched orders
+    to check.  Need to create a step to remove records from the NoOrderMatch table
+    after a resolution is processed for that record
+"""
 """
 This script will process FB EDDM lists downloaded from eddm order portal
 """
@@ -538,7 +544,7 @@ def process_non_match(hours):
     non_match.file_over_threshold = date_ordered_file_list(non_match.file_over_threshold)
     non_match.file_under_threshold = date_ordered_file_list(non_match.file_under_threshold)
 
-    # Figure out if any orders haven't been matched to previous orders
+    # Figure out if any orders haven't been matched to previous data files
     if int(get_order_by_date.count_unmatched_orders_order_detail(gblv)[0][0]) > 0:
         gblv.print_log("Searching previously unmatched Marcom orders")
 
