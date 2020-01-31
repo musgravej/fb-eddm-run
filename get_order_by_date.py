@@ -559,7 +559,7 @@ def import_userdata(gblv):
             agency_state = line[1080:1082].strip()
             agency_zip = ("{}-{}".format(line[1082:1087].strip(), line[1087:1091].strip()) 
                           if line[1087:1091].strip() != '0000' 
-                      else "{}".format(line[1082:1087].strip()))
+                          else "{}".format(line[1082:1087].strip()))
             agent_email = line[680:930].strip()
             agent_state = line[25:27].strip()
             agent_reg_rep = line[603:604].strip()
@@ -571,6 +571,9 @@ def import_userdata(gblv):
                                  agency_address1, agency_address2, agency_city, 
                                  agency_state, agency_zip, agent_email, agent_state,
                                  agent_reg_rep, agent_job_desc,))
+
+            if n % 200 == 0:
+                conn.commit()
 
     conn.commit()
 

@@ -11,6 +11,11 @@ import settings
 import get_order_by_date
 import fpdf
 import time
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from email.mime.base import MIMEBase
+from email import encoders
 
 # TODO Clean Up NoOrderMatch table
 """ somewhere here there's an error where records in the NoOrderMatch table
@@ -626,6 +631,56 @@ def write_tag_merge():
             log.write("{0}\t{1}\t{2:,}\n".format(line[1], line[8], line[3]))
 
 
+def email_agent_status(days):
+    port = 25
+    smtp_server = gblv.email_server
+    sender_email = gblv.email_user
+    email_from = gblv.email_from
+    receiver_email = gblv.agent_email
+
+    pdt = datetime.datetime.strftime(datetime.datetime.now(), "%Y-%m-%d")
+
+    html_head = ("<html> <head> <style> td, th { border: 1px solid #dddddd; "
+                 "text-align: left; padding: 8px;}</style> </head> <body> ")
+
+    html_foot = "</body> </html><p>"
+    date_from = datetime.datetime.strftime(datetime.datetime.today(), "%Y/%m/%d")
+    date_to = datetime.datetime.strftime(datetime.timedelta(days=(days - 1)) + datetime.datetime.today(), "%Y/%m/%d")
+
+    message_html = (f"<p>Agent status for jobs mailing {date_from} - {date_to}<br><p/><table width: 100%;> "
+                    "<tr><th>Job Name</th><th>Mailing Date</th><th>Agent ID</th><th>Status</th>"
+                    "<th>Agent Name</th></tr>")
+
+    for line in get_order_by_date.jobs_mailing_agent_status(gblv, days):
+        message_html += (f"<tr><td>{line[0]}</td><td>{line[1]}</td><td>{line[2]}</td><td>{line[4]}</td>"
+                         f"<td>{line[5]}</td></tr>")
+
+    message_html += "</table>"
+    message_html += ("<p>Report run {0}<br>".format(datetime.datetime.strftime(datetime.datetime.now(),
+                                                                               "%Y-%m-%d %I:%M %p")))
+    message_html += ("V2FBLUSERDATA last updated: {0}</p>".format(
+            get_order_by_date.v2fbluserdata_update_date(gblv)[0][0]))
+
+    html = f"{html_head}{message_html}{html_foot}"
+    subject = "Agent to job status for EDDM orders on {0}".format(datetime.datetime.strftime(datetime.datetime.now(),
+                                                                                             "%Y-%m-%d"))
+    text = ""
+    message = MIMEMultipart("alternative")
+
+    message["Subject"] = subject
+    message["From"] = sender_email
+    message["To"] = receiver_email
+
+    message.attach(MIMEText(text, "plain"))
+    message.attach(MIMEText(html, "html"))
+
+    with smtplib.SMTP(smtp_server, port) as server:
+        print("sending EDDM agent email")
+        server.starttls()
+        server.sendmail(email_from, message["To"].split(","),
+                        message.as_string())
+
+
 def job_agent_status(days):
     """
     Writes a report of jobs in the next [days] days, and the agent status of each job
@@ -654,6 +709,92 @@ def job_agent_status(days):
                                                                         "%Y-%m-%d %I:%M %p")))
 
         log.write("\nV2FBLUSERDATA last updated: {}\n".format(get_order_by_date.v2fbluserdata_update_date(gblv)[0][0]))
+
+
+def email_message_log():
+    port = 25
+    smtp_server = gblv.email_server
+    sender_email = gblv.email_user
+    email_from = gblv.email_from
+    receiver_email = gblv.email_to
+
+    pdt = datetime.datetime.strftime(datetime.datetime.now(), "%Y-%m-%d %H:%M:%S")
+
+    html_head = ("<html> <head> <style> td, th { border: 1px solid #dddddd; "
+                 "text-align: left; padding: 8px;}</style> </head> <body> ")
+    html_foot = "</body> </html><p>"
+    part_1_html = ""
+    part_2_html = ""
+    part_3_html = ""
+    message_html = ""
+
+    for message in gblv.log_messages:
+        message_html += f"{message}<br>"
+    message_html += "</p>"
+
+    if get_order_by_date.processing_files_log(gblv):
+        part_1_html = ("<p>Summary of new files processed<br><p/><table width: 100%;> "
+                       "<tr><th>File name</th><th>Job name</th><th>Order Date</th><th>Mailing date</th>"
+                       "<th>File count</th><th>File Touches</th><th>Marcom Count</th>"
+                       "<th>Marcom touches</th><th>Status</th></tr>")
+
+        for line in get_order_by_date.processing_files_log(gblv):
+            part_1_html += (f"<tr><td>{line[0]}</td><td>{line[1]}</td><td>{line[2]}</td><td>{line[8]}</td>"
+                            f"<td>{line[3]}</td><td>{line[4]}</td><td>{line[5]}</td>"
+                            f"<td>{line[6]}</td><td>{line[7]}</td></tr>")
+
+        part_1_html += "</table>"
+
+    else:
+        part_1_html = "<p>No new files processed<br><p/>"
+
+    if get_order_by_date.nomatch_processing_files_log(gblv):
+        part_2_html = ("<p>Summary of non-match files processed<br><p/><table width: 100%;> "
+                       "<tr><th>File name</th><th>Job name</th><th>Order Date</th><th>Mailing date</th>"
+                       "<th>File count</th><th>File Touches</th><th>Marcom Count</th>"
+                       "<th>Marcom touches</th><th>Status</th></tr>")
+
+        for line in get_order_by_date.nomatch_processing_files_log(gblv):
+            part_2_html += (f"<tr><td>{line[0]}</td><td>{line[1]}</td><td>{line[2]}</td><td>{line[8]}</td>"
+                            f"<td>{line[3]}</td><td>{line[4]}</td><td>{line[5]}</td>"
+                            f"<td>{line[6]}</td><td>{line[7]}</td></tr>")
+
+        part_2_html += "</table>"
+
+    else:
+        part_2_html = "<p>No non-match files processed<br><p/>"
+
+    if get_order_by_date.marcom_orders_unmatched(gblv):
+        part_3_html = ("<p>Unmatched Marcom orders<br><p/><table width: 100%;> "
+                       "<tr><th>Order Date</th><th>User ID</th><th>Order ID</th><th>Order Detail ID</th>"
+                       "<th>Order Number</th><th>Qty</th></tr>")
+
+        for line in get_order_by_date.marcom_orders_unmatched(gblv):
+            part_3_html += (f"<tr><td>{line[0]}</td><td>{line[1]}</td><td>{line[2]}</td>"
+                            f"<td>{line[3]}</td><td>{line[4]}</td><td>{line[5]}</td></tr>")
+        part_3_html += "</table>"
+
+    else:
+        part_3_html = "<p>No unmatched Marcom orders<br><p/>"
+
+    html = f"{html_head}{message_html}{part_1_html}{part_2_html}{part_3_html}{html_foot}"
+    subject = f"FB EDDM for processing {pdt}"
+
+    text = ""
+    message = MIMEMultipart("alternative")
+
+    message["Subject"] = subject
+    message["From"] = sender_email
+    message["To"] = receiver_email
+
+    message.attach(MIMEText(text, "plain"))
+    message.attach(MIMEText(html, "html"))
+
+    with smtplib.SMTP(smtp_server, port) as server:
+        print("sending EDDM log email")
+        server.starttls()
+        server.sendmail(email_from, message["To"].split(","),
+                        message.as_string())
 
 
 def write_message_log():
@@ -814,8 +955,16 @@ def run_processing():
     get_order_by_date.append_filename_to_orderdetail_48_hour(gblv)
     get_order_by_date.processing_table_to_history(gblv)
 
-    write_message_log()
-    job_agent_status(5)
+    try:
+        email_message_log()
+        if datetime.date.today().weekday() in (1, 3):
+            email_agent_status(5)
+        write_message_log()
+        job_agent_status(5)
+    except Exception as e:
+        print(e)
+        write_message_log()
+        job_agent_status(5)
 
 
 def force_processing(file_name, order_detail_order_id):

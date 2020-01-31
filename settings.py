@@ -17,6 +17,12 @@ class GlobalVar:
         config = configparser.ConfigParser()
         config.read(os.path.join(os.curdir, 'config.ini'))
 
+        self.email_to = config['EMAIL']['email_to']
+        self.agent_email = config['EMAIL']['agent_email']
+        self.email_from = config['EMAIL']['email_from']
+        self.email_user = config['EMAIL']['email_user']
+        self.email_server = config['EMAIL']['email_server']
+
         self.fb_token = config['token']['fb_token']
         # self.fb_qa_token = config['token']['fbmtk-qa_token']
         # Changed this token to the production token, now working with live orders 2019-07-22
